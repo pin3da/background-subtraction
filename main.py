@@ -9,7 +9,8 @@ while(1):
     ret, frame = cap.read()
     fgmask = fgbg.apply(frame)
     cv2.imshow('frame', fgmask)
-    k = cv2.waitKey(100) & 0xff
+    cv2.imshow('video', frame)
+    k = cv2.waitKey(10) & 0xff
     if k == 27:
         break
 cap.release()
