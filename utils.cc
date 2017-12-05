@@ -4,7 +4,8 @@
 
 using namespace std;
 
-void update_frame(filter_mat &bg_model, cv::Mat &frame) {
+template<class filter>
+void update_frame(vector<vector<vector<filter>>> &bg_model, cv::Mat &frame) {
   const int cols = frame.size().width;
   const int rows = frame.size().height;
   const int channels = frame.channels();
@@ -18,7 +19,8 @@ void update_frame(filter_mat &bg_model, cv::Mat &frame) {
   }
 }
 
-void get_model(filter_mat &bg_model, cv::Mat &frame) {
+template<class filter>
+void get_model(vector<vector<vector<filter>>> &bg_model, cv::Mat &frame) {
   const int cols = frame.size().width;
   const int rows = frame.size().height;
   const int channels = frame.channels();
@@ -32,7 +34,8 @@ void get_model(filter_mat &bg_model, cv::Mat &frame) {
   }
 }
 
-void get_background(filter_mat &bg_model, cv::Mat &ref, cv::Mat &dest) {
+template<class filter>
+void get_background(vector<vector<vector<filter>>> &bg_model, cv::Mat &ref, cv::Mat &dest) {
   const int cols = ref.size().width;
   const int rows = ref.size().height;
   const int channels = ref.channels();
