@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <deque>
 
 #include "debug.cc"
 
@@ -15,6 +16,39 @@ double gaussian_dist(double mean, double sig, double x) {
 
   double dist = mean - x;
   return norm * exp(- (dist * dist) / (2 * sig * sig));
+}
+
+double m_pow(double base, int e) {
+  double ans = 1;
+  while (e > 0) {
+    if (e & 1)
+      ans *= base;
+    base *= base;
+    e >>= 1;
+  }
+  return ans;
+}
+
+inline double estimate_mean(std::deque<double> x) {
+  double ans = 0;
+  for (auto it : x)
+    ans += it;
+  return ans / double(x.size());
+}
+
+inline double estimate_sigma(std::deque<double> x, double mean) {
+  double ans = 1e-9;
+  for (auto it : x)
+    ans += (it - mean) * (it - mean);
+  return sqrt(ans / double(x.size()));
+}
+
+inline double estimate_kurtosis(std::deque<double> x, double mean, double sigma) {
+  double ans = 0;
+  for (auto i : x) {
+    ans += m_pow((i - mean) / sigma, 4);
+  }
+  return ans / double(x.size());
 }
 
 struct lms_filter {
@@ -40,14 +74,22 @@ struct lms_filter {
 };
 
 struct corr_filter {
-  double mean, sigma, eta, threshold;
+  double mean, sigma, eta, threshold, lambda;
+  size_t T;
 
-  corr_filter() : mean(100), sigma(100), eta(0.1), threshold(0.003) {}
-  corr_filter(double mean, double sigma, double eta, double threshold) :
+  std::deque<double> error, data;
+
+  corr_filter() : corr_filter(100, 10, 0.3, 0.003, 0.5, 20) {}
+  corr_filter(double mean, double sigma, double eta, double threshold,
+              double lambda, size_t T) :
     mean(mean),
     sigma(sigma),
     eta(eta),
-    threshold(threshold)
+    threshold(threshold),
+    lambda(lambda),
+    T(T),
+    error(),
+    data()
   {}
 
   double kernel(double x, double y) {
@@ -56,9 +98,32 @@ struct corr_filter {
     return exp(- (dist * dist * den));
   }
 
+  void update_sigma() {
+    if (error.size() != T)
+      return;
+
+    double mean_err = estimate_mean(error);
+    double sigma_err = estimate_sigma(error, mean_err);
+
+    double kurt_err = estimate_kurtosis(error, mean_err, sigma_err);
+    double kurt_model = estimate_kurtosis(data, mean, sigma);
+
+    sigma = lambda * sigma + (1 - lambda) * sigma_err * sqrt(kurt_model / kurt_err);
+  }
+
   void update(double x) {
     double e = x - mean;
+    error.push_back(e);
+    if (error.size() > T)
+      error.pop_front();
+
+    data.push_back(x);
+    if (data.size() > T)
+      data.pop_front();
+
+    update_sigma();
     // TODO: Fix learning rate, eta / (sigma * sigma)
+    // mean = mean + (eta / (sigma * sigma)) * e * kernel(x, mean);
     mean = mean + eta * e * kernel(x, mean);
   }
 
