@@ -6,6 +6,8 @@
 #include <iostream>
 #include <memory>
 
+#include "debug.cc"
+
 const double pi = acos(-1);
 
 double gaussian_dist(double mean, double sig, double x) {
@@ -40,7 +42,7 @@ struct lms_filter {
 struct corr_filter {
   double mean, sigma, eta, threshold;
 
-  corr_filter() : mean(10), sigma(0.2), eta(0.2), threshold(40) {}
+  corr_filter() : mean(100), sigma(100), eta(0.1), threshold(0.003) {}
   corr_filter(double mean, double sigma, double eta, double threshold) :
     mean(mean),
     sigma(sigma),
@@ -56,12 +58,12 @@ struct corr_filter {
 
   void update(double x) {
     double e = x - mean;
-    mean = mean + (eta / (sigma * sigma)) * e * kernel(x, mean);
-//     std::cout << mean << ' ' << x << std::endl;
+    // TODO: Fix learning rate, eta / (sigma * sigma)
+    mean = mean + eta * e * kernel(x, mean);
   }
 
   unsigned char eval(double x) {
-    if (gaussian_dist(mean, sigma, x) > threshold)
+    if (gaussian_dist(mean, sigma, x) < threshold)
       return 200;
     return 10;
   }

@@ -33,7 +33,6 @@ int main(int argc, char **argv) {
   corr_mat corr_bg_model(rows, vector<vector<corr_filter>>(cols, vector<corr_filter> (channels)));
 
 
-
   for (int k = 0; k < warm_up; k++) {
     cap >> frame;
     update_frame(lms_bg_model, frame);
