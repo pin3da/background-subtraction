@@ -53,7 +53,7 @@ inline double estimate_kurtosis(std::deque<double> x, double mean, double sigma)
 
 struct lms_filter {
   double mean, sigma, eta, threshold;
-  lms_filter() : mean(10), sigma(0.2), eta(0.2), threshold(50) {}
+  lms_filter() : mean(10), sigma(0.2), eta(0.01), threshold(50) {}
   lms_filter(double mean, double sigma, double eta, double threshold) :
     mean(mean),
     sigma(sigma),
@@ -79,7 +79,7 @@ struct corr_filter {
 
   std::deque<double> error, data;
 
-  corr_filter() : corr_filter(100, 10, 0.3, 0.003, 0.5, 20) {}
+  corr_filter() : corr_filter(100, 1, 0.5, 0.004, 0.5, 20) {}
   corr_filter(double mean, double sigma, double eta, double threshold,
               double lambda, size_t T) :
     mean(mean),
@@ -122,9 +122,7 @@ struct corr_filter {
       data.pop_front();
 
     update_sigma();
-    // TODO: Fix learning rate, eta / (sigma * sigma)
-    // mean = mean + (eta / (sigma * sigma)) * e * kernel(x, mean);
-    mean = mean + eta * e * kernel(x, mean);
+    mean = mean + (eta / (sigma * sigma)) * e * kernel(x, mean);
   }
 
   unsigned char eval(double x) {

@@ -13,7 +13,7 @@ typedef vector<vector<vector<lms_filter>>> lms_mat;
 typedef vector<vector<vector<corr_filter>>> corr_mat;
 
 int main(int argc, char **argv) {
-  VideoCapture cap("videos/Video_001.avi");
+  VideoCapture cap("videos/highway/input/in%6d.jpg");
 
   namedWindow("cv-original");moveWindow("cv-original", 10, 50);
   namedWindow("cv-background subtraction"); moveWindow("cv-background subtraction", 410, 50);
@@ -32,6 +32,10 @@ int main(int argc, char **argv) {
   lms_mat lms_bg_model(rows, vector<vector<lms_filter>>(cols, vector<lms_filter> (channels)));
   corr_mat corr_bg_model(rows, vector<vector<corr_filter>>(cols, vector<corr_filter> (channels)));
 
+  cap >> frame;
+
+  init_model(lms_bg_model, frame);
+  init_model(corr_bg_model, frame);
 
   for (int k = 0; k < warm_up; k++) {
     cap >> frame;
@@ -48,7 +52,6 @@ int main(int argc, char **argv) {
     update_frame(lms_bg_model, frame);
     get_model(lms_bg_model, dest);
     get_background(lms_bg_model, frame, bg);
-
     imshow("cv-original", frame);
     imshow("cv-background subtraction", bg);
     imshow("cv-background model", dest);
