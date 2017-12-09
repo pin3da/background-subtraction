@@ -1,11 +1,13 @@
 #ifndef CFILTER
 #define CFILTER
 
-#include <vector>
+#include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <memory>
 #include <deque>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <vector>
 
 #include "debug.cc"
 
@@ -37,28 +39,28 @@ inline double estimate_mean(std::deque<double> x) {
 }
 
 inline double estimate_sigma(std::deque<double> x, double mean) {
-  double ans = 1e-9;
+  double ans = 0;
+  double den = 1.0 / double(x.size() - 1);
   for (auto it : x)
-    ans += (it - mean) * (it - mean);
-  return sqrt(ans / double(x.size()));
+    ans += (it - mean) * (it - mean) * den;
+  return sqrt(ans);
 }
 
 inline double estimate_kurtosis(std::deque<double> x, double mean, double sigma) {
   double ans = 0;
+  double den = 1.0 / double(x.size());
   for (auto i : x) {
-    ans += m_pow((i - mean) / sigma, 4);
+    ans += m_pow((i - mean) / sigma, 4) * den;
   }
-  return ans / double(x.size());
+  return ans;
 }
 
 struct lms_filter {
-  double mean, sigma, eta, threshold;
-  lms_filter() : mean(10), sigma(0.2), eta(0.01), threshold(50) {}
-  lms_filter(double mean, double sigma, double eta, double threshold) :
+  double mean, sigma, eta;
+  lms_filter() : mean(10), eta(0.005) {}
+  lms_filter(double mean, double eta) :
     mean(mean),
-    sigma(sigma),
-    eta(eta),
-    threshold(threshold)
+    eta(eta)
   {}
 
   void update(double x) {
@@ -66,28 +68,23 @@ struct lms_filter {
     mean = mean + eta * e;
   }
 
-  unsigned char eval(double x) {
-    if (abs(x - mean) > threshold)
-      return 200;
-    return 10;
+  double eval(double x) {
+    return 1.0 - (abs(x - mean) / 255.0);
   }
 };
 
 struct corr_filter {
-  double mean, sigma, eta, threshold, lambda;
+  double mean, sigma, eta, lambda;
   size_t T;
 
   std::deque<double> error, data;
 
-  corr_filter() : corr_filter(100, 1, 0.5, 0.004, 0.5, 20) {}
-  corr_filter(double mean, double sigma, double eta, double threshold,
-              double lambda, size_t T) :
-    mean(mean),
-    sigma(sigma),
-    eta(eta),
-    threshold(threshold),
-    lambda(lambda),
-    T(T),
+  corr_filter() :
+    mean(100),
+    sigma(35),
+    eta(0.1 * 30 * 30),  // eta * sigma ** 2
+    lambda(0.9999),
+    T(20),
     error(),
     data()
   {}
@@ -99,16 +96,16 @@ struct corr_filter {
   }
 
   void update_sigma() {
-    if (error.size() != T)
+    if (error.size() < T)
       return;
 
-    double mean_err = estimate_mean(error);
-    double sigma_err = estimate_sigma(error, mean_err);
+    double mean_e = estimate_mean(error);
+    double sigma_err = estimate_sigma(error, mean_e);
 
-    double kurt_err = estimate_kurtosis(error, mean_err, sigma_err);
+    double kurt_err = estimate_kurtosis(error, mean_e, sigma_err);
     double kurt_model = estimate_kurtosis(data, mean, sigma);
 
-    sigma = lambda * sigma + (1 - lambda) * sigma_err * sqrt(kurt_model / kurt_err);
+    sigma = lambda * sigma + (1.0 - lambda) * sigma_err * sqrt(kurt_model / kurt_err);
   }
 
   void update(double x) {
@@ -125,10 +122,8 @@ struct corr_filter {
     mean = mean + (eta / (sigma * sigma)) * e * kernel(x, mean);
   }
 
-  unsigned char eval(double x) {
-    if (gaussian_dist(mean, sigma, x) < threshold)
-      return 200;
-    return 10;
+  double eval(double x) {
+    return gaussian_dist(mean, sigma, x);
   }
 };
 

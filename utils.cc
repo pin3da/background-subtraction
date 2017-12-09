@@ -58,7 +58,10 @@ const cv::Vec3b white(255, 255, 255);
 const cv::Vec3b black(0, 0, 0);
 
 template<class filter>
-void get_background(vector<vector<vector<filter>>> &bg_model, cv::Mat &ref, cv::Mat &dest) {
+void get_background(vector<vector<vector<filter>>> &bg_model,
+                    cv::Mat &ref,
+                    cv::Mat &dest,
+                    double threshold) {
   const int cols = ref.size().width;
   const int rows = ref.size().height;
   const int channels = ref.channels();
@@ -66,12 +69,12 @@ void get_background(vector<vector<vector<filter>>> &bg_model, cv::Mat &ref, cv::
 #pragma omp parallel for
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
-      int sum = 0;
+      double prod = 1;
       for (int c = 0; c < channels; c++) {
         auto x = ref.at<cv::Vec3b>(i, j)[c];
-        sum += bg_model[i][j][c].eval(x);
+        prod *= bg_model[i][j][c].eval(x);
       }
-      if (sum >= 400)
+      if (prod <= threshold) // probability of be background
         dest.at<cv::Vec3b>(i, j) = white;
       else
         dest.at<cv::Vec3b>(i, j) = black;

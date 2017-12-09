@@ -15,7 +15,6 @@ typedef vector<vector<vector<corr_filter>>> corr_mat;
 
 int main(int argc, char **argv) {
   VideoCapture cap("videos/highway/input/in%6d.jpg");
-  // gt_reader gt_cap("videos/highway/groundtruth/gt%06d.png");
   VideoCapture gt_cap("videos/highway/groundtruth/gt%06d.png");
 
   namedWindow("cv-original");moveWindow("cv-original", 10, 50);
@@ -60,7 +59,7 @@ int main(int argc, char **argv) {
 
     update_frame(lms_bg_model, frame);
     get_model(lms_bg_model, dest);
-    get_background(lms_bg_model, frame, bg);
+    get_background(lms_bg_model, frame, bg, 0.4);
     imshow("cv-original", frame);
     imshow("cv-background subtraction", bg);
     imshow("cv-background model", dest);
@@ -70,7 +69,7 @@ int main(int argc, char **argv) {
 
     update_frame(corr_bg_model, frame);
     get_model(corr_bg_model, dest);
-    get_background(corr_bg_model, frame, bg);
+    get_background(corr_bg_model, frame, bg, 7e-7);
     imshow("cv-background subtraction CORR", bg);
     imshow("cv-background model CORR", dest);
 
