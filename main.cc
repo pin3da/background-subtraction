@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 
   Mat frame, gt;
 
-  for (int k = 0; k < 500; k++) {
+  for (int k = 0; k < 500; k++) { // frames without label
     cap >> frame; gt_cap >> gt;
   }
 
@@ -43,19 +43,27 @@ int main(int argc, char **argv) {
   init_model(lms_bg_model, frame);
   init_model(corr_bg_model, frame);
 
+  Mat dest = frame.clone();
+  Mat bg = frame.clone();
+
   for (int k = 0; k < warm_up; k++) {
     cap >> frame; gt_cap >> gt;
     update_frame(lms_bg_model, frame);
+    get_background(lms_bg_model, frame, bg, 0.4);
+    cout << f1_score(gt, bg) << "\t";
+
     update_frame(corr_bg_model, frame);
+    get_background(corr_bg_model, frame, bg, 7e-7);
+    cout << f1_score(gt, bg) << endl;
   }
 
-  Mat dest = frame.clone();
-  Mat bg = frame.clone();
+
 
   cout << fixed << setprecision(7);
 
   while (true) {
     cap >> frame; gt_cap >> gt;
+    if (frame.rows == 0) break;
 
     update_frame(lms_bg_model, frame);
     get_model(lms_bg_model, dest);
@@ -76,7 +84,7 @@ int main(int argc, char **argv) {
     imshow("cv-ground truth", gt);
 
     cout << f1_score(gt, bg) << endl;
-    if (waitKey(30) >= 0)
+    if (waitKey(30) == 27) // esc
       break;
   }
   return 0;
