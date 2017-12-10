@@ -1,3 +1,6 @@
+#include <chrono>
+#include <ctime>
+#include <ratio>
 
 #include "opencv2/opencv.hpp"
 #include "./filter.cc"
@@ -80,4 +83,12 @@ void get_background(vector<vector<vector<filter>>> &bg_model,
         dest.at<cv::Vec3b>(i, j) = black;
     }
   }
+}
+
+template<class F>
+void time_it(string name, F &&f) {
+  std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+  f();
+  std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start);
+  std::cout << name << " " << time_span.count() << std::endl;
 }

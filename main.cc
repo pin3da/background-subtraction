@@ -46,15 +46,17 @@ int main(int argc, char **argv) {
   Mat dest = frame.clone();
   Mat bg = frame.clone();
 
+  const double corr_threshold = 5 * 1e-9;
+
   for (int k = 0; k < warm_up; k++) {
     cap >> frame; gt_cap >> gt;
     update_frame(lms_bg_model, frame);
-    get_background(lms_bg_model, frame, bg, 0.4);
-    cout << f1_score(gt, bg) << "\t";
+    get_background(lms_bg_model, frame, bg, 0.5);
+    // cout << f1_score(gt, bg) << "\t";
 
     update_frame(corr_bg_model, frame);
-    get_background(corr_bg_model, frame, bg, 7e-7);
-    cout << f1_score(gt, bg) << endl;
+    get_background(corr_bg_model, frame, bg, corr_threshold);
+    // cout << f1_score(gt, bg) << endl;
   }
 
 
@@ -65,25 +67,29 @@ int main(int argc, char **argv) {
     cap >> frame; gt_cap >> gt;
     if (frame.rows == 0) break;
 
-    update_frame(lms_bg_model, frame);
+    time_it("time_lms", [&]() {
+      update_frame(lms_bg_model, frame);
+    });
+
     get_model(lms_bg_model, dest);
-    get_background(lms_bg_model, frame, bg, 0.4);
+    get_background(lms_bg_model, frame, bg, 0.5);
     imshow("cv-original", frame);
     imshow("cv-background subtraction", bg);
     imshow("cv-background model", dest);
 
-    cout << f1_score(gt, bg) << "\t";
+    //cout << f1_score(gt, bg) << "\t";
 
-
-    update_frame(corr_bg_model, frame);
+    time_it("time_correntropy", [&]() {
+      update_frame(corr_bg_model, frame);
+    });
     get_model(corr_bg_model, dest);
-    get_background(corr_bg_model, frame, bg, 7e-7);
+    get_background(corr_bg_model, frame, bg, corr_threshold);
     imshow("cv-background subtraction CORR", bg);
     imshow("cv-background model CORR", dest);
 
     imshow("cv-ground truth", gt);
 
-    cout << f1_score(gt, bg) << endl;
+    // cout << f1_score(gt, bg) << endl;
     if (waitKey(30) == 27) // esc
       break;
   }

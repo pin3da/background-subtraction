@@ -57,7 +57,7 @@ inline double estimate_kurtosis(std::deque<double> x, double mean, double sigma)
 
 struct lms_filter {
   double mean, sigma, eta;
-  lms_filter() : mean(10), eta(0.005) {}
+  lms_filter() : mean(10), eta(0.05) {}
   lms_filter(double mean, double eta) :
     mean(mean),
     eta(eta)
@@ -81,10 +81,10 @@ struct corr_filter {
 
   corr_filter() :
     mean(100),
-    sigma(35),
-    eta(0.1 * 30 * 30),  // eta * sigma ** 2
-    lambda(0.9999),
-    T(20),
+    sigma(40),
+    eta(0.05 * 40 * 40),  // eta * sigma ** 2
+    lambda(0.99),
+    T(200),
     error(),
     data()
   {}
