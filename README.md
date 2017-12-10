@@ -52,4 +52,4 @@ Object-based Selective Updating and Correntropy adaptation"
 
 ----
 
-[Manuel Pineda](://github.com/pin3da) - [Carlos Gonzalez](://github.com/caal-15)
+[Manuel Pineda](https://github.com/pin3da) - [Carlos Gonzalez](https://github.com/caal-15)
